@@ -1,5 +1,9 @@
 import unittest
-from inline_markdown import split_nodes_delimiter
+from inline_markdown import (
+    split_nodes_delimiter,
+    extract_markdown_images,
+    extract_markdown_links,
+)
 from textnode import TextNode, TextType
 
 
@@ -9,14 +13,14 @@ class TestInlineMarkdown(unittest.TestCase):
         old_nodes = [node]
         delimiter = ""
         new_nodes = split_nodes_delimiter(old_nodes, delimiter, TextType.PLAIN_TEXT)
-        self.assertEqual(new_nodes, old_nodes)
+        self.assertListEqual(new_nodes, old_nodes)
 
     def test_inline_markdown_with_nested_element(self):
         node = TextNode("plain text with **bold text**", TextType.PLAIN_TEXT)
         old_nodes = [node]
         delimiter = "**"
         new_nodes = split_nodes_delimiter(old_nodes, delimiter, TextType.BOLD_TEXT)
-        self.assertEqual(
+        self.assertListEqual(
             [
                 TextNode("plain text with ", TextType.PLAIN_TEXT),
                 TextNode("bold text", TextType.BOLD_TEXT),
@@ -40,7 +44,7 @@ class TestInlineMarkdown(unittest.TestCase):
         old_nodes = [node]
         delimiter = "**"
         new_nodes = split_nodes_delimiter(old_nodes, delimiter, TextType.BOLD_TEXT)
-        self.assertEqual(
+        self.assertListEqual(
             [
                 TextNode("plain text with ", TextType.PLAIN_TEXT),
                 TextNode("bold text 1", TextType.BOLD_TEXT),
@@ -57,7 +61,7 @@ class TestInlineMarkdown(unittest.TestCase):
         ]
         delimiter = "**"
         new_nodes = split_nodes_delimiter(old_nodes, delimiter, TextType.BOLD_TEXT)
-        self.assertEqual(
+        self.assertListEqual(
             [
                 TextNode("plain text with ", TextType.PLAIN_TEXT),
                 TextNode("bold text 1", TextType.BOLD_TEXT),
@@ -65,6 +69,28 @@ class TestInlineMarkdown(unittest.TestCase):
                 TextNode("bold text 2", TextType.BOLD_TEXT),
             ],
             new_nodes,
+        )
+
+    def test_markdown_image_extraction(self):
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        images = extract_markdown_images(text)
+        self.assertListEqual(
+            images,
+            [
+                ("rick roll", "https://i.imgur.com/aKaOqIh.gif"),
+                ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg"),
+            ],
+        )
+
+    def test_markdown_link_extraction(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        links = extract_markdown_links(text)
+        self.assertListEqual(
+            links,
+            [
+                ("to boot dev", "https://www.boot.dev"),
+                ("to youtube", "https://www.youtube.com/@bootdotdev"),
+            ],
         )
 
 
