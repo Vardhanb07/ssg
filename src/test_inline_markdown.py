@@ -72,7 +72,7 @@ class TestInlineMarkdown(unittest.TestCase):
         )
 
     def test_markdown_image_extraction(self):
-        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        text = "This is a text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
         images = extract_markdown_images(text)
         self.assertListEqual(
             images,
@@ -82,8 +82,18 @@ class TestInlineMarkdown(unittest.TestCase):
             ],
         )
 
+    def test_markdown_image_extraction_with_no_images(self):
+        text = "This text only contains links [to youtube](https://www.youtube.com/@bootdotdev)"
+        images = extract_markdown_images(text)
+        self.assertListEqual(images, [])
+
+    def test_markdown_image_extraction_against_links(self):
+        text = "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif) and link [to boot dev](https://www.boot.dev)"
+        images = extract_markdown_images(text)
+        self.assertListEqual(images, [("rick roll", "https://i.imgur.com/aKaOqIh.gif")])
+
     def test_markdown_link_extraction(self):
-        text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        text = "This is a text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
         links = extract_markdown_links(text)
         self.assertListEqual(
             links,
@@ -92,6 +102,16 @@ class TestInlineMarkdown(unittest.TestCase):
                 ("to youtube", "https://www.youtube.com/@bootdotdev"),
             ],
         )
+
+    def test_markdown_link_extraction_with_no_links(self):
+        text = "This text only contains images ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
+        links = extract_markdown_links(text)
+        self.assertListEqual(links, [])
+
+    def test_markdown_link_extraction_against_images(self):
+        text = "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif) and link [to boot dev](https://www.boot.dev)"
+        links = extract_markdown_links(text)
+        self.assertListEqual(links, [("to boot dev", "https://www.boot.dev")])
 
 
 if __name__ == "__main__":
