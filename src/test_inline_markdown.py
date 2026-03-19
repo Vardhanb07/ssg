@@ -3,6 +3,8 @@ from inline_markdown import (
     split_nodes_delimiter,
     extract_markdown_images,
     extract_markdown_links,
+    split_nodes_images,
+    split_nodes_links,
 )
 from textnode import TextNode, TextType
 
@@ -112,6 +114,172 @@ class TestInlineMarkdown(unittest.TestCase):
         text = "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif) and link [to boot dev](https://www.boot.dev)"
         links = extract_markdown_links(text)
         self.assertListEqual(links, [("to boot dev", "https://www.boot.dev")])
+
+    def test_split_markdown_images(self):
+        text = "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
+        old_nodes = [TextNode(text, TextType.PLAIN_TEXT)]
+        new_nodes = split_nodes_images(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This text contains image ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "rick roll", TextType.IMAGE_TEXT, "https://i.imgur.com/aKaOqIh.gif"
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_images_with_multiple_images(self):
+        text = "This is a text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        old_nodes = [TextNode(text, TextType.PLAIN_TEXT)]
+        new_nodes = split_nodes_images(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This is a text with a ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "rick roll", TextType.IMAGE_TEXT, "https://i.imgur.com/aKaOqIh.gif"
+                ),
+                TextNode(" and ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "obi wan", TextType.IMAGE_TEXT, "https://i.imgur.com/fJRm4Vk.jpeg"
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_images_with_multiple_old_nodes(self):
+        old_nodes = [
+            TextNode(
+                "This is a text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)",
+                TextType.PLAIN_TEXT,
+            ),
+            TextNode(
+                "This is a text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)",
+                TextType.PLAIN_TEXT,
+            ),
+        ]
+        new_nodes = split_nodes_images(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This is a text with a ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "rick roll", TextType.IMAGE_TEXT, "https://i.imgur.com/aKaOqIh.gif"
+                ),
+                TextNode(" and ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "obi wan", TextType.IMAGE_TEXT, "https://i.imgur.com/fJRm4Vk.jpeg"
+                ),
+                TextNode("This is a text with a ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "rick roll", TextType.IMAGE_TEXT, "https://i.imgur.com/aKaOqIh.gif"
+                ),
+                TextNode(" and ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "obi wan", TextType.IMAGE_TEXT, "https://i.imgur.com/fJRm4Vk.jpeg"
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_images_against_links(self):
+        text = "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif) and link [to boot dev](https://www.boot.dev)"
+        old_nodes = [TextNode(text, TextType.PLAIN_TEXT)]
+        new_nodes = split_nodes_images(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This text contains image ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "rick roll", TextType.IMAGE_TEXT, "https://i.imgur.com/aKaOqIh.gif"
+                ),
+                TextNode(
+                    " and link [to boot dev](https://www.boot.dev)", TextType.PLAIN_TEXT
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_links(self):
+        text = "This text only contains links [to youtube](https://www.youtube.com/@bootdotdev)"
+        old_nodes = [TextNode(text, TextType.PLAIN_TEXT)]
+        new_nodes = split_nodes_links(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This text only contains links ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "to youtube",
+                    TextType.LINK_TEXT,
+                    "https://www.youtube.com/@bootdotdev",
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_links_with_multiple_links(self):
+        text = "This is a text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        old_nodes = [TextNode(text, TextType.PLAIN_TEXT)]
+        new_nodes = split_nodes_links(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This is a text with a link ", TextType.PLAIN_TEXT),
+                TextNode("to boot dev", TextType.LINK_TEXT, "https://www.boot.dev"),
+                TextNode(" and ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "to youtube",
+                    TextType.LINK_TEXT,
+                    "https://www.youtube.com/@bootdotdev",
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_links_with_multiple_old_nodes(self):
+        old_nodes = [
+            TextNode(
+                "This is a text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)",
+                TextType.PLAIN_TEXT,
+            ),
+            TextNode(
+                "This is a text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)",
+                TextType.PLAIN_TEXT,
+            ),
+        ]
+        new_nodes = split_nodes_links(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode("This is a text with a link ", TextType.PLAIN_TEXT),
+                TextNode("to boot dev", TextType.LINK_TEXT, "https://www.boot.dev"),
+                TextNode(" and ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "to youtube",
+                    TextType.LINK_TEXT,
+                    "https://www.youtube.com/@bootdotdev",
+                ),
+                TextNode("This is a text with a link ", TextType.PLAIN_TEXT),
+                TextNode("to boot dev", TextType.LINK_TEXT, "https://www.boot.dev"),
+                TextNode(" and ", TextType.PLAIN_TEXT),
+                TextNode(
+                    "to youtube",
+                    TextType.LINK_TEXT,
+                    "https://www.youtube.com/@bootdotdev",
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_markdown_links_against_images(self):
+        text = "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif) and link [to boot dev](https://www.boot.dev)"
+        old_nodes = [TextNode(text, TextType.PLAIN_TEXT)]
+        new_nodes = split_nodes_links(old_nodes)
+        self.assertListEqual(
+            [
+                TextNode(
+                    "This text contains image ![rick roll](https://i.imgur.com/aKaOqIh.gif) and link ",
+                    TextType.PLAIN_TEXT,
+                ),
+                TextNode("to boot dev", TextType.LINK_TEXT, "https://www.boot.dev"),
+            ],
+            new_nodes,
+        )
 
 
 if __name__ == "__main__":
