@@ -145,3 +145,24 @@ def ordered_list_to_html_node(block):
         text = item.split(".", 1)[1].strip()
         children.append(ParentNode("li", text_to_html_nodes(text)))
     return ParentNode("ol", children)
+
+
+def extract_title(markdown):
+    blocks = markdown_to_blocks(markdown)
+    title = ""
+    for block in blocks:
+        if len(title) != 0:
+            break
+        block_type = block_to_block_type(block)
+        if block_type == BlockType.HEADING:
+            level = 0
+            for c in block:
+                if c == "#":
+                    level += 1
+                else:
+                    break
+            if level == 1:
+                title = block[level + 1 :]
+    if len(title) == 0:
+        raise ValueError("no h1 element found for title")
+    return title
