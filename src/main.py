@@ -5,16 +5,7 @@ import sys
 
 
 def delete_dir_files(file_path):
-    child_dirs = os.listdir(file_path)
-    if len(child_dirs) == 0:
-        return
-    for child_dir in child_dirs:
-        path = os.path.join(file_path, child_dir)
-        if os.path.isdir(path):
-            delete_dir_files(path)
-            os.removedirs(path)
-        elif os.path.isfile(path):
-            os.remove(path)
+    shutil.rmtree(file_path)
 
 
 def copy_files_recur(src, dest):
@@ -38,8 +29,7 @@ def copy_files(src, dest):
         raise ValueError("source folder does not exist")
     if os.path.exists(dest):
         delete_dir_files(dest)
-    else:
-        os.mkdir(dest)
+    os.mkdir(dest)
     copy_files_recur(src, dest)
 
 
